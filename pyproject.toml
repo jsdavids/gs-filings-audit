@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Auditable financial agents: SEC EDGAR data over MCP, metric computation with lineage, and a risk agent whose signed approval is required before any report is released."
 requires-python = ">=3.12"
 dependencies = [
-    "agentmesh",
+    "agentmesh @ https://github.com/jsdavids/agent-mesh-core/archive/refs/tags/v0.1.0.tar.gz",
     "cryptography>=42",
     "httpx>=0.28",
     "pyjwt[crypto]>=2.10",
@@ -20,8 +20,8 @@ dev = ["pytest", "pytest-asyncio"]
 [project.scripts]
 filingsaudit = "filingsaudit.cli:main"
 
-[tool.uv.sources]
-agentmesh = { path = "../agent-mesh-core", editable = true }
+[tool.hatch.metadata]
+allow-direct-references = true  # agentmesh is installed from its GitHub release tarball (no git needed)
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/filingsaudit"]

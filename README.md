@@ -7,7 +7,7 @@ agent can reach and writes every call to a **tamper-evident audit log**. Aimed
 at the Goldman Sachs Tech Summer Analyst role, where controls and auditability
 matter as much as the AI.
 
-Built on [`agent-mesh-core`](../agent-mesh-core).
+Built on [`agent-mesh-core`](https://github.com/jsdavids/agent-mesh-core).
 
 ```mermaid
 flowchart LR
@@ -36,7 +36,10 @@ flowchart LR
 ## Run it
 
 ```bash
-uv venv -p 3.13 && uv pip install -e ../agent-mesh-core -e '.[dev]'
+uv venv -p 3.13 && uv pip install -e '.[dev]'
+# agentmesh (the shared core) installs from its v0.1.0 release on GitHub. To work on
+# the core at the same time: git clone https://github.com/jsdavids/agent-mesh-core ../agent-mesh-core
+#   && uv pip install -e ../agent-mesh-core
 .venv/bin/pytest                         # 17 tests on a synthetic company
 
 export AGENTMESH_SECRET=$(python -c "import secrets; print(secrets.token_urlsafe(48))")
