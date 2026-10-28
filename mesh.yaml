@@ -1,0 +1,52 @@
+# Auditable filings-analyst mesh. From this directory:
+#   export AGENTMESH_SECRET=$(python -c "import secrets; print(secrets.token_urlsafe(48))")
+#   export AGENTMESH_AUDIT_KEY=$(python -c "import secrets; print(secrets.token_urlsafe(32))")
+#   export SEC_USER_AGENT="Your Name you@example.com"
+#   filingsaudit keygen
+#   agentmesh up mesh.yaml
+#   filingsaudit analyze AAPL
+gateway:
+  port: 8200
+
+mcp_servers:
+  edgar:   {url: "http://127.0.0.1:9120/mcp"}
+  reports: {url: "http://127.0.0.1:9121/mcp"}
+
+agents:
+  filings: {url: "http://127.0.0.1:9221"}
+  metrics: {url: "http://127.0.0.1:9222"}
+  risk:    {url: "http://127.0.0.1:9223"}
+
+principals:
+  orchestrator:
+    agents: [filings, metrics, risk]
+    mcp: {reports: [publish_report]}       # can request release, cannot approve
+  filings:
+    mcp: {edgar: [lookup_company, list_filings, get_annual_facts]}
+  metrics: {}                              # computes only; no data access
+  risk:
+    mcp: {edgar: [get_annual_facts]}       # re-fetches sources; cannot publish
+
+services:
+  - name: edgar
+    app: "filingsaudit.servers:edgar_app"
+    port: 9120
+    env: {SEC_USER_AGENT: "${SEC_USER_AGENT}"}
+  - name: reports
+    app: "filingsaudit.servers:reports_app"
+    port: 9121
+    env: {RISK_PUBLIC_KEY_FILE: keys/risk_ed25519.pub.pem, REPORTS_DIR: reports}
+  - {name: filings, app: "filingsaudit.agents:filings", port: 9221, principal: filings}
+  - {name: metrics, app: "filingsaudit.agents:metrics", port: 9222, principal: metrics}
+  - name: risk
+    app: "filingsaudit.agents:risk"
+    port: 9223
+    principal: risk
+    env: {RISK_SIGNING_KEY_FILE: keys/risk_ed25519.pem}   # only this process gets the private key
+
+audit:
+  path: audit/gateway.jsonl
+  hash_chain: true        # HMAC-keyed when AGENTMESH_AUDIT_KEY is set; verify with `agentmesh audit verify`
+
+tracing:
+  exporter: none          # otlp + endpoint: http://localhost:4318/v1/traces for Jaeger
